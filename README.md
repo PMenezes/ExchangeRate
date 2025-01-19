@@ -109,7 +109,7 @@ The API will be available at `http://localhost:8080` by default.
 
 ### Swagger Documentation
 
-Visit `http://localhost:8080/swagger-ui.html` to explore the API documentation and test endpoints interactively.
+Visit `http://localhost:8080/api-docs` to explore the API documentation and test endpoints interactively.
 
 ## Contact
 
