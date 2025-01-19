@@ -4,7 +4,10 @@ This repository contains a Java Spring-based API designed to fetch exchange rate
 
 ## Features
 
-- Fetch exchange rates from multiple public APIs.
+- Fetch all exchange rates from a currency.
+- Fetch exchange rate from two different currencies.
+- Get value conversion from two currencies.
+- Get value conversion from a currency to a list of supplied currencies.
 - Calculate conversions between currencies using the latest rates.
 - Handle fallback mechanisms in case one API fails.
 - Designed with extensibility and scalability in mind.
