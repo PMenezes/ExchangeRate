@@ -1,118 +1,107 @@
-# Exchange Rates API
+# Exchange Rate API
 
-This repository contains a Java Spring-based API designed to fetch exchange rates from one or more publicly available APIs and use them for conversion calculations. The API provides endpoints for retrieving exchange rates and performing currency conversions.
+This project is a Java Spring Boot application that fetches exchange rates from one or more publicly available APIs (e.g., ExchangeRate.host) and performs currency conversion calculations. It includes mechanisms for caching and rate limiting.
 
 ## Features
 
-- Fetch all exchange rates from a currency.
-- Fetch exchange rate from two different currencies.
-- Get value conversion from two currencies.
-- Get value conversion from a currency to a list of supplied currencies.
-- Calculate conversions between currencies using the latest rates.
-- Handle fallback mechanisms in case one API fails.
-- Designed with extensibility and scalability in mind.
+- **Fetch Exchange Rates**: Retrieves exchange rates from ExchangeRate.host.
+- **Currency Conversion**: Converts amounts from one currency to another based on the fetched rates.
+- **Caching**: Implements a caching mechanism to reduce external API calls, allowing up to a 1-minute delay for non-real-time data.
+- **Rate Limiting**: Protects the API from abuse by limiting the number of requests per user.
+- **Unit Testing**: Includes unit tests to ensure the reliability of API operations.
 
-## Technologies Used
+## Prerequisites
 
-- **Java**
-- **Spring Boot**
-- **REST API**
-- **Maven**
+- **Java**: JDK 17 or later
+- **Maven**: Version 3.8.1 or later
+- **Docker** (optional): For running the application in a containerized environment
 
-## Setup and Installation
-
-### Prerequisites
-
-1. **Java Development Kit (JDK)**: Ensure you have JDK 11 or higher installed.
-2. **Maven**: Install Maven for dependency management.
+## Getting Started
 
 ### Clone the Repository
-
 ```bash
-$ git clone https://github.com/your-username/exchange-rates-api.git
-$ cd exchange-rates-api
+git clone https://github.com/your-repo/exchange-rate-api.git
+cd exchange-rate-api
 ```
 
-### Configure the Application
+### Build the Project
+```bash
+mvn clean install
+```
 
-1. Create an `application.properties` file in the `src/main/resources` directory.
-2. Add the required configuration:
+### Run the Application
+```bash
+mvn spring-boot:run
+```
+
+The application will start at `http://localhost:8080` by default.
+
+### Run with Docker
+1. Build the Docker image:
+   ```bash
+   docker build -t exchange-rate-api .
+   ```
+2. Run the Docker container:
+   ```bash
+   docker run -p 8080:8080 exchange-rate-api
+   ```
+
+## API Endpoints
+
+### Exchange Rate Retrieval
+**GET /api/exchange-rate?from={currencyA}&to={currencyB}**
+- **Description**: Fetches the exchange rate from `currencyA` to `currencyB`.
+- **Parameters**:
+  - `from`: Source currency code (e.g., `USD`)
+  - `to`: Target currency code (e.g., `EUR`)
+- **Response**:
+  ```json
+  {
+    "rate": 0.85
+  }
+  ```
+
+### Rate Limiting
+- The API limits the number of requests per minute for each user.
+- Customizable via `application.properties`.
+
+## Externalized Properties
+The application uses `application.properties` for configuration. Key properties include:
 
 ```properties
-# Example configuration
-api.key=<your-api-key>
-api.urls=https://api1.example.com,https://api2.example.com
+# API Configuration
+external.api.url=https://api.exchangerate.host/latest
+external.api.cache.ttl=60 # seconds
+
+# Rate Limiting
+rate.limit.requests=100
+rate.limit.time=60 # seconds
+
+# Server Configuration
 server.port=8080
 ```
 
-Replace `<your-api-key>` with your API key(s) and `https://api1.example.com` with the base URLs of the exchange rate APIs you intend to use.
+## Swagger API Documentation
+```
+`http://localhost:8080/api-docs` to explore the API documentation and test endpoints interactively.
+```
 
-### Build and Run the Application
+## Testing
 
-Build the project using Maven:
-
+Run unit tests using:
 ```bash
-$ mvn clean install
+mvn test
 ```
 
-Run the application:
-
-```bash
-$ mvn spring-boot:run
-```
-
-The API will be available at `http://localhost:8080` by default.
-
-## Usage
-
-### Endpoints
-
-#### 1. Fetch Exchange Rates
-
-**GET** `/api/v1/exchange-rates`
-
-- **Description**: Retrieve the latest exchange rates.
-- **Response Example**:
-
-```json
-{
-  "baseCurrency": "USD",
-  "rates": {
-    "EUR": 0.91,
-    "JPY": 136.5
-  }
+### Example Unit Test
+Unit tests are written for core functionalities like fetching exchange rates and conversions. Example:
+```java
+@Test
+void testGetExchangeRate() {
+    double rate = exchangeRateService.getExchangeRate("USD", "EUR");
+    assertEquals(0.85, rate);
 }
 ```
-
-#### 2. Convert Currency
-
-**POST** `/api/v1/convert`
-
-- **Description**: Convert an amount from one currency to another.
-- **Request Example**:
-
-```json
-{
-  "from": "USD",
-  "to": "EUR",
-  "amount": 100
-}
-```
-
-- **Response Example**:
-
-```json
-{
-  "from": "USD",
-  "to": "EUR",
-  "amount": 100,
-  "convertedAmount": 91
-}
-```
-
-### Swagger Documentation
-
-Visit `http://localhost:8080/api-docs` to explore the API documentation and test endpoints interactively.
 
 ## Contact
 
