@@ -13,10 +13,9 @@ public class ExchangeRateController {
         this.exchangeRateService = exchangeRateService;
     }
 
-    @PostMapping("/fetch")
-    public String fetchAndStoreExchangeRate(@RequestParam String base, @RequestParam String target) {
-        exchangeRateService.fetchAndSaveExchangeRate(base, target);
-        return "Exchange rate fetched and stored successfully!";
+    @GetMapping("/rate")
+    public Double getExchangeRate(@RequestParam String fromCurrency, @RequestParam String toCurrency) {
+        return exchangeRateService.getExchangeRate(fromCurrency, toCurrency);
     }
 }
 

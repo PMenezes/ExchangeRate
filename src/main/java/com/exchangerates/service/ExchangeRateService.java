@@ -1,41 +1,66 @@
 package com.exchangerates.service;
 
-import com.exchangerates.model.ExchangeRate;
-import com.exchangerates.repository.ExchangeRateRepository;
+import com.exchangerates.dto.ExchangeRateDto;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
+import java.time.Instant;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 @Service
 public class ExchangeRateService {
 
-    private final ExchangeRateRepository exchangeRateRepository;
     private final RestTemplate restTemplate;
+    private final Map<String, CachedRate> rateCache = new ConcurrentHashMap<>();
 
-    public ExchangeRateService(ExchangeRateRepository exchangeRateRepository) {
-        this.exchangeRateRepository = exchangeRateRepository;
+    public ExchangeRateService() {
         this.restTemplate = new RestTemplate();
     }
 
-    public void fetchAndSaveExchangeRate(String baseCurrency, String targetCurrency) {
-        String url = String.format("https://api.exchangerate.host/latest?base=%s&symbols=%s", baseCurrency, targetCurrency);
 
-        // Fetch data from the API
-        Map response = restTemplate.getForObject(url, Map.class);
+    public Double getExchangeRate(String fromCurrency, String toCurrency) {
+        String key = fromCurrency + "_" + toCurrency;
 
-        // Extract the exchange rate
-        if (response != null && response.containsKey("rates")) {
-            Map<String, Double> rates = (Map<String, Double>) response.get("rates");
-            double rate = rates.get(targetCurrency);
+        // Check if the rate is in the cache and not older than 1 minute
+        CachedRate cachedRate = rateCache.get(key);
+        if (cachedRate != null && cachedRate.timestamp().isAfter(Instant.now().minusSeconds(60))) {
+            return cachedRate.rate();
+        }
 
-            // Save to the database
-            ExchangeRate exchangeRate = new ExchangeRate();
-            exchangeRate.setBaseCurrency(baseCurrency);
-            exchangeRate.setTargetCurrency(targetCurrency);
-            exchangeRate.setRate(rate);
+        // Fetch data from the external API
+        String url = String.format("https://api.exchangerate.host/latest?base=%s&symbols=%s", fromCurrency, toCurrency);
+        ExchangeRateDto response = restTemplate.getForObject(url, ExchangeRateDto.class);
 
-            exchangeRateRepository.save(exchangeRate);
+        if (response != null && response.getRates() != null) {
+            Double rate = response.getRates().get(toCurrency);
+
+            // Cache the rate
+            rateCache.put(key, new CachedRate(rate, Instant.now()));
+            return rate;
+        }
+
+        throw new RuntimeException("Unable to fetch exchange rate");
+    }
+
+    @Scheduled(fixedRate = 60000) // Refresh every 60 seconds
+    public void refreshPopularRates() {
+        String[] popularPairs = {"USD_EUR", "USD_GBP", "EUR_GBP"}; // Example pairs
+
+        for (String pair : popularPairs) {
+            String[] currencies = pair.split("_");
+            String fromCurrency = currencies[0];
+            String toCurrency = currencies[1];
+
+            try {
+                getExchangeRate(fromCurrency, toCurrency);
+            } catch (Exception ex) {
+                // Handle refresh failure (e.g., log the error)
+            }
         }
     }
+
+    // Helper class to store rate and timestamp
+    private record CachedRate(Double rate, Instant timestamp) {}
 }
