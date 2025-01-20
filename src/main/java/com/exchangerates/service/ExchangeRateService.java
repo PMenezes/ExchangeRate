@@ -60,7 +60,4 @@ public class ExchangeRateService {
             }
         }
     }
-
-    // Helper class to store rate and timestamp
-    private record CachedRate(Double rate, Instant timestamp) {}
 }
