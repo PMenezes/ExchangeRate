@@ -7,6 +7,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 
+import java.util.HashMap;
 import java.util.Map;
 
 
@@ -25,8 +26,23 @@ public class ExchangeRateService {
         this.restTemplate = new RestTemplate();
     }
 
+    @Cacheable(value = "exchangeRates", key = "#fromCurrency", unless = "#result == null || #result.getQuotes().isEmpty()")
     public Double getExchangeRate(String fromCurrency, String toCurrency) {
-        return null;
+        // Build the URL
+        String url = UriComponentsBuilder.fromHttpUrl(apiUrl + "/live")
+                .queryParam("access_key", accessKey)
+                .queryParam("source", fromCurrency)
+                .queryParam("currencies", toCurrency)
+                .toUriString();
+
+        // Fetch the response
+        ExchangeRateDto response = restTemplate.getForObject(url, ExchangeRateDto.class);
+
+        if (response != null && response.getQuotes() != null) {
+            return response.getQuotes().get(fromCurrency+toCurrency);
+        }
+
+        throw new RuntimeException("Failed to fetch exchange rate for " + fromCurrency + " to " + toCurrency);
     }
 
     @Cacheable(value = "exchangeRates", key = "#fromCurrency", unless = "#result == null || #result.getQuotes().isEmpty()")
@@ -65,5 +81,33 @@ public class ExchangeRateService {
         }
 
         throw new RuntimeException("Failed to fetch conversion value");
+    }
+
+    @Cacheable(value = "currencyConversions", key = "#fromCurrency + ':' + #toCurrencies + ':' + #amount")
+    public Map<String, Double> convertCurrencyToMultiple(String fromCurrency, String toCurrencies, double amount) {
+        String[] targetCurrencies = toCurrencies.split(",");
+        Map<String, Double> conversions = new HashMap<>();
+
+        for (String targetCurrency : targetCurrencies) {
+            // Build the URL for the /convert endpoint
+            String url = UriComponentsBuilder.fromHttpUrl(apiUrl + "/convert")
+                    .queryParam("from", fromCurrency)
+                    .queryParam("to", targetCurrency.trim())
+                    .queryParam("amount", amount)
+                    .toUriString();
+
+            // Fetch the conversion result
+            Map<String, Object> response = restTemplate.getForObject(url, Map.class);
+
+            // Extract the result and add it to the conversions map
+            if (response != null && response.containsKey("result")) {
+                Double result = (Double) response.get("result");
+                conversions.put(targetCurrency.trim(), result);
+            } else {
+                throw new RuntimeException("Failed to fetch conversion for " + targetCurrency.trim());
+            }
+        }
+
+        return conversions;
     }
 }

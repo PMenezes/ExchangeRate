@@ -51,5 +51,17 @@ public class ExchangeRateController {
             @RequestParam double amount) {
         return exchangeRateService.convertCurrency(from, to, amount);
     }
+
+    @Operation(
+            summary = "Convert amount from one currency to multiple currencies",
+            description = "Takes 'from', 'toCurrencies' (comma-separated), and 'amount' as query parameters and returns the converted values."
+    )
+    @GetMapping("/convert-multiple")
+    public Map<String, Double> convertCurrencyToMultiple(
+            @RequestParam String from,
+            @RequestParam String toCurrencies, // Comma-separated currency codes
+            @RequestParam double amount) {
+        return exchangeRateService.convertCurrencyToMultiple(from, toCurrencies, amount);
+    }
 }
 
