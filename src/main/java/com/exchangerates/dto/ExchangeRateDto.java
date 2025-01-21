@@ -6,13 +6,23 @@ import java.util.Map;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class ExchangeRateDto {
-    private Map<String, Double> rates;
 
-    public Map<String, Double> getRates() {
-        return rates;
+    private String source;
+    private Map<String, Double> quotes;
+
+    public String getSource() {
+        return source;
     }
 
-    public void setRates(Map<String, Double> rates) {
-        this.rates = rates;
+    public void setSource(String source) {
+        this.source = source;
+    }
+
+    public Map<String, Double> getQuotes() {
+        return quotes;
+    }
+
+    public void setQuotes(Map<String, Double> quotes) {
+        this.quotes = quotes;
     }
 }

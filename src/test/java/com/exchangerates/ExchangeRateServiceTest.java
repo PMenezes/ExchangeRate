@@ -1,18 +1,21 @@
 package com.exchangerates;
 
+import com.exchangerates.dto.ExchangeRateDto;
 import com.exchangerates.service.ExchangeRateService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.client.RestTemplate;
 
 import java.util.HashMap;
 import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 /**
  * Mocks the RestTemplate to simulate external API calls.
@@ -32,23 +35,47 @@ class ExchangeRateServiceTest {
     }
 
     @Test
-    void testGetExchangeRate() {
-        // Arrange
-        String baseCurrency = "USD";
-        String targetCurrency = "EUR";
-        String apiUrl = String.format("https://api.exchangerate.host/latest?base=%s&symbols=%s", baseCurrency, targetCurrency);
-
+    void testConvertCurrency() {
+        // Mock API response
         Map<String, Object> mockResponse = new HashMap<>();
-        Map<String, Double> rates = new HashMap<>();
-        rates.put(targetCurrency, 0.85);
-        mockResponse.put("rates", rates);
+        mockResponse.put("result", 85.0); // Example conversion value
 
-        when(restTemplate.getForObject(apiUrl, Map.class)).thenReturn(mockResponse);
+        // Mock RestTemplate behavior
+        when(restTemplate.getForObject(anyString(), (Class<Map>) any())).thenReturn(mockResponse);
 
-        // Act
-        double rate = exchangeRateService.getExchangeRate(baseCurrency, targetCurrency);
+        // Call the method under test
+        String fromCurrency = "USD";
+        String toCurrency = "EUR";
+        double amount = 100.0;
 
-        // Assert
-        assertEquals(0.85, rate);
+        Double result = exchangeRateService.convertCurrency(fromCurrency, toCurrency, amount);
+
+        // Assert the result
+        assertEquals(85.0, result, 0.01, "Conversion value should match the mocked response");
+    }
+
+
+    @Test
+    public void testCacheableBehavior() {
+        String baseCurrency = "USD";
+        String url = "https://api.exchangerate.host/live?access_key=ce648ff03367120f4ee491ea636b8adb&source=USD";
+
+        Map<String, Double> mockRates = Map.of("USDEUR", 0.85, "USDGBP", 0.75);
+        Map<String, Object> mockResponse = Map.of("source", "USD", "quotes", mockRates);
+
+        // Mock external API response
+        when(restTemplate.getForEntity(url, Map.class))
+                .thenReturn(new ResponseEntity<>(mockResponse, HttpStatus.OK));
+
+        // First call - should fetch from API
+        ExchangeRateDto rates1 = exchangeRateService.getAllExchangeRates(baseCurrency);
+        assertEquals(0.85, rates1.getQuotes().get("USDEUR"));
+
+        // Second call - should fetch from cache
+        ExchangeRateDto rates2 = exchangeRateService.getAllExchangeRates(baseCurrency);
+        assertEquals(0.85, rates2.getQuotes().get("USDEUR"));
+
+        // Verify external API was only called once
+        verify(restTemplate, times(1)).getForEntity(url, Map.class);
     }
 }
