@@ -27,7 +27,7 @@ public class ExchangeRateService {
     }
 
     @Cacheable(value = "exchangeRates", key = "#fromCurrency", unless = "#result == null || #result.getQuotes().isEmpty()")
-    public Double getExchangeRate(String fromCurrency, String toCurrency) {
+    public ExchangeRateDto getExchangeRate(String fromCurrency, String toCurrency) {
         // Build the URL
         String url = UriComponentsBuilder.fromHttpUrl(apiUrl + "/live")
                 .queryParam("access_key", accessKey)
@@ -39,7 +39,7 @@ public class ExchangeRateService {
         ExchangeRateDto response = restTemplate.getForObject(url, ExchangeRateDto.class);
 
         if (response != null && response.getQuotes() != null) {
-            return response.getQuotes().get(fromCurrency+toCurrency);
+            return response;
         }
 
         throw new RuntimeException("Failed to fetch exchange rate for " + fromCurrency + " to " + toCurrency);

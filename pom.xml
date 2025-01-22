@@ -48,13 +48,6 @@
             <artifactId>jackson-databind</artifactId>
         </dependency>
 
-        <!-- Database connector example (H2 for local testing) -->
-        <dependency>
-            <groupId>com.h2database</groupId>
-            <artifactId>h2</artifactId>
-            <scope>runtime</scope>
-        </dependency>
-
         <!-- Spring Boot DevTools for development purposes -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
@@ -83,16 +76,17 @@
             <scope>test</scope>
         </dependency>
 
+        <!-- Unit Tests -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-test</artifactId>
+            <scope>test</scope>
+        </dependency>
+
         <dependency>
             <groupId>org.mockito</groupId>
             <artifactId>mockito-core</artifactId>
-            <version>5.5.0</version> <!-- Use the latest version -->
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.mockito</groupId>
-            <artifactId>mockito-junit-jupiter</artifactId>
-            <version>5.5.0</version> <!-- Use the latest version -->
+            <version>4.0.0</version>
             <scope>test</scope>
         </dependency>
 
@@ -125,6 +119,25 @@
             <groupId>com.github.ben-manes.caffeine</groupId>
             <artifactId>caffeine</artifactId>
             <version>3.1.8</version>
+        </dependency>
+
+        <!-- Authentication Dependencies -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-security</artifactId>
+            <version>3.1.4</version> <!-- Example compatible version -->
+        </dependency>
+
+        <!-- GraphQL Dependencies -->
+        <!-- Spring Boot Web and GraphQL dependencies -->
+        <dependency>
+            <groupId>com.graphql-java</groupId>
+            <artifactId>graphql-java</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-graphql</artifactId>
+            <version>3.1.0</version>
         </dependency>
     </dependencies>
 

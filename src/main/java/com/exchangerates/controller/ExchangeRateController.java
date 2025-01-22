@@ -22,8 +22,14 @@ public class ExchangeRateController {
     }
 
     @GetMapping("/rate")
-    public Double getExchangeRate(@RequestParam("from") String fromCurrency, @RequestParam("to") String toCurrency) {
-        return exchangeRateService.getExchangeRate(fromCurrency, toCurrency);
+    @Operation(summary = "Get exchange rate from a given currency")
+    public ResponseEntity<Double> getExchangeRate(@RequestParam("from") String fromCurrency, @RequestParam("to") String toCurrency) {
+        try {
+            ExchangeRateDto rates = exchangeRateService.getExchangeRate(fromCurrency, toCurrency);
+            return ResponseEntity.ok(rates.getQuotes().get(fromCurrency+toCurrency));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Double.NaN);
+        }
     }
 
     @GetMapping("/all")
@@ -42,26 +48,29 @@ public class ExchangeRateController {
         }
     }
 
-    @Operation(summary = "Convert amount from one currency to another",
-            description = "Takes 'from', 'to', and 'amount' as query parameters and returns the converted value.")
     @GetMapping("/convert")
-    public Double convertCurrency(
-            @RequestParam String from,
-            @RequestParam String to,
-            @RequestParam double amount) {
-        return exchangeRateService.convertCurrency(from, to, amount);
+    @Operation(
+            summary = "Convert a given currency amount to another",
+            description = "Takes 'from', 'to', and 'amount' as query parameters and returns the converted value.")
+    public ResponseEntity<Double> convertCurrency(@RequestParam String from, @RequestParam String to, @RequestParam double amount) {
+        try {
+            return ResponseEntity.ok(exchangeRateService.convertCurrency(from, to, amount));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Double.NaN);
+        }
     }
 
-    @Operation(
-            summary = "Convert amount from one currency to multiple currencies",
-            description = "Takes 'from', 'toCurrencies' (comma-separated), and 'amount' as query parameters and returns the converted values."
-    )
     @GetMapping("/convert-multiple")
-    public Map<String, Double> convertCurrencyToMultiple(
-            @RequestParam String from,
-            @RequestParam String toCurrencies, // Comma-separated currency codes
-            @RequestParam double amount) {
-        return exchangeRateService.convertCurrencyToMultiple(from, toCurrencies, amount);
+    @Operation(
+            summary = "Convert a given currency amount to multiple currencies",
+            description = "Takes 'from', 'toCurrencies' (comma-separated), and 'amount' as query parameters and returns the converted values.")
+    public ResponseEntity<Map<String, Double>> convertCurrencyToMultiple(@RequestParam String from, @RequestParam String toCurrencies, @RequestParam double amount) {
+        try {
+            return ResponseEntity.ok(exchangeRateService.convertCurrencyToMultiple(from, toCurrencies, amount));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Collections.singletonMap("error", Double.NaN));
+        }
     }
 }
 
