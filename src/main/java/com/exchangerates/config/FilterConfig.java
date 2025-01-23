@@ -1,6 +1,6 @@
 package com.exchangerates.config;
 
-import com.exchangerates.filter.RateLimitingFilter;
+import com.exchangerates.filter.ExchangeRateLimitingFilter;
 import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -9,10 +9,10 @@ import org.springframework.context.annotation.Configuration;
 public class FilterConfig {
 
     @Bean
-    public FilterRegistrationBean<RateLimitingFilter> rateLimitingFilter(RateLimitingFilter rateLimitingFilter) {
-        FilterRegistrationBean<RateLimitingFilter> registrationBean = new FilterRegistrationBean<>();
-        registrationBean.setFilter(rateLimitingFilter);
-        registrationBean.addUrlPatterns("/api/v1/exchange-rates/*"); // Apply to specific paths
+    public FilterRegistrationBean<ExchangeRateLimitingFilter> rateLimitingFilter(ExchangeRateLimitingFilter exchangeRateLimitingFilter) {
+        FilterRegistrationBean<ExchangeRateLimitingFilter> registrationBean = new FilterRegistrationBean<>();
+        registrationBean.setFilter(exchangeRateLimitingFilter);
+        registrationBean.addUrlPatterns("/api/exchange-rate/*"); // Apply to specific paths
         return registrationBean;
     }
 }

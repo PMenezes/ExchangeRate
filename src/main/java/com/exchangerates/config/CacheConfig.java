@@ -13,19 +13,10 @@ public class CacheConfig {
 
     @Bean
     public CacheManager cacheExchangeRatesManager() {
-        CaffeineCacheManager cacheManager = new CaffeineCacheManager("exchangeRates");
+        CaffeineCacheManager cacheManager = new CaffeineCacheManager("exchangeRateCache");
         cacheManager.setCaffeine(Caffeine.newBuilder()
                 .expireAfterWrite(1, TimeUnit.MINUTES) // Cache expires after 1 minute
                 .maximumSize(100)); // Maximum number of cache entries
-        return cacheManager;
-    }
-
-    @Bean
-    public CacheManager cacheConversionsManager() {
-        CaffeineCacheManager cacheManager = new CaffeineCacheManager("currencyConversions");
-        cacheManager.setCaffeine(Caffeine.newBuilder()
-                .expireAfterWrite(1, TimeUnit.MINUTES) // Cache expires after 1 minute
-                .maximumSize(100)); // Maximum 100 cache entries
         return cacheManager;
     }
 }

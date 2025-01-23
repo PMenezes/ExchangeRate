@@ -10,11 +10,11 @@ import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 
 @Component
-public class RateLimitingFilter implements Filter {
+public class ExchangeRateLimitingFilter implements Filter {
 
     private final RateLimiter rateLimiter;
 
-    public RateLimitingFilter(RateLimiter rateLimiter) {
+    public ExchangeRateLimitingFilter(RateLimiter rateLimiter) {
         this.rateLimiter = rateLimiter;
     }
 

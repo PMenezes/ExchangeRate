@@ -26,7 +26,7 @@ public class ExchangeRateService {
         this.restTemplate = new RestTemplate();
     }
 
-    @Cacheable(value = "exchangeRates", key = "#fromCurrency", unless = "#result == null || #result.getQuotes().isEmpty()")
+    @Cacheable(value = "exchangeRateCache", key = "#fromCurrency", unless = "#result == null || #result.getQuotes().isEmpty()")
     public ExchangeRateDto getExchangeRate(String fromCurrency, String toCurrency) {
         // Build the URL
         String url = UriComponentsBuilder.fromHttpUrl(apiUrl + "/live")
@@ -45,7 +45,7 @@ public class ExchangeRateService {
         throw new RuntimeException("Failed to fetch exchange rate for " + fromCurrency + " to " + toCurrency);
     }
 
-    @Cacheable(value = "exchangeRates", key = "#fromCurrency", unless = "#result == null || #result.getQuotes().isEmpty()")
+    @Cacheable(value = "exchangeRateCache", key = "#fromCurrency", unless = "#result == null || #result.getQuotes().isEmpty()")
     public ExchangeRateDto getAllExchangeRates(String fromCurrency) {
         // Build the URL
         String url = UriComponentsBuilder.fromHttpUrl(apiUrl + "/live")
@@ -62,7 +62,7 @@ public class ExchangeRateService {
         throw new RuntimeException("Failed to fetch exchange rates");
     }
 
-    @Cacheable(value = "currencyConversions", key = "#fromCurrency + '_' + #toCurrency + '_' + #amount")
+    @Cacheable(value = "exchangeRateCache", key = "#fromCurrency + '_' + #toCurrency + '_' + #amount")
     public Double convertCurrency(String fromCurrency, String toCurrency, double amount) {
         // Build the URL
         String url = UriComponentsBuilder.fromHttpUrl(apiUrl + "/convert")
@@ -83,7 +83,7 @@ public class ExchangeRateService {
         throw new RuntimeException("Failed to fetch conversion value");
     }
 
-    @Cacheable(value = "currencyConversions", key = "#fromCurrency + ':' + #toCurrencies + ':' + #amount")
+    @Cacheable(value = "exchangeRateCache", key = "#fromCurrency + ':' + #toCurrencies + ':' + #amount")
     public Map<String, Double> convertCurrencyToMultiple(String fromCurrency, String toCurrencies, double amount) {
         String[] targetCurrencies = toCurrencies.split(",");
         Map<String, Double> conversions = new HashMap<>();

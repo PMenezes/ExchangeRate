@@ -7,7 +7,8 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
+import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
@@ -23,7 +24,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  * Uses MockMvc to simulate HTTP requests to the REST API.
  * Mocks the service layer to isolate the controller's functionality.
  */
-@WebMvcTest(ExchangeRateController.class)
+@SpringBootTest(classes = ExchangeRatesApiApplication.class)
+@AutoConfigureMockMvc //need this in Spring Boot test
 class ExchangeRateControllerTest {
 
     @Autowired
@@ -50,7 +52,7 @@ class ExchangeRateControllerTest {
         when(mockRateDto.getQuotes()).thenReturn(Map.of("USDEUR", 1.23));
 
         // Act & Assert: Perform the request and verify the response
-        mockMvc.perform(get("/rate")
+        mockMvc.perform(get("/api/exchange-rate/rate")
                         .param("from", fromCurrency)
                         .param("to", toCurrency))
                 .andExpect(status().isOk())
@@ -68,7 +70,7 @@ class ExchangeRateControllerTest {
         when(exchangeRateService.getExchangeRate(fromCurrency, toCurrency)).thenThrow(new RuntimeException("Error"));
 
         // Act & Assert: Perform the request and verify the response
-        mockMvc.perform(get("/rate")
+        mockMvc.perform(get("/api/exchange-rate/rate")
                         .param("from", fromCurrency)
                         .param("to", toCurrency))
                 .andExpect(status().isInternalServerError())
@@ -89,7 +91,7 @@ class ExchangeRateControllerTest {
         when(mockRateDto.getQuotes()).thenReturn(mockQuotes);
 
         // Act & Assert: Perform the request and verify the response
-        mockMvc.perform(get("/all")
+        mockMvc.perform(get("/api/exchange-rate/all")
                         .param("from", fromCurrency))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.base").value("USD"))
@@ -107,7 +109,7 @@ class ExchangeRateControllerTest {
         when(exchangeRateService.getAllExchangeRates(fromCurrency)).thenThrow(new RuntimeException("Error"));
 
         // Act & Assert: Perform the request and verify the response
-        mockMvc.perform(get("/all")
+        mockMvc.perform(get("/api/exchange-rate/all")
                         .param("from", fromCurrency))
                 .andExpect(status().isInternalServerError())
                 .andExpect(jsonPath("$.error").value("Error"));
@@ -127,7 +129,7 @@ class ExchangeRateControllerTest {
         when(exchangeRateService.convertCurrency(fromCurrency, toCurrency, amount)).thenReturn(convertedAmount);
 
         // Act & Assert: Perform the request and verify the response
-        mockMvc.perform(get("/convert")
+        mockMvc.perform(get("/api/exchange-rate/convert")
                         .param("from", fromCurrency)
                         .param("to", toCurrency)
                         .param("amount", String.valueOf(amount)))
@@ -147,7 +149,7 @@ class ExchangeRateControllerTest {
         when(exchangeRateService.convertCurrency(fromCurrency, toCurrency, amount)).thenThrow(new RuntimeException("Error"));
 
         // Act & Assert: Perform the request and verify the response
-        mockMvc.perform(get("/convert")
+        mockMvc.perform(get("/api/exchange-rate/convert")
                         .param("from", fromCurrency)
                         .param("to", toCurrency)
                         .param("amount", String.valueOf(amount)))
@@ -174,7 +176,7 @@ class ExchangeRateControllerTest {
         when(exchangeRateService.convertCurrencyToMultiple(fromCurrency, toCurrencies, amount)).thenReturn(conversionResults);
 
         // Act & Assert: Perform the request and verify the response
-        mockMvc.perform(get("/convert-multiple")
+        mockMvc.perform(get("/api/exchange-rate/convert-multiple")
                         .param("from", fromCurrency)
                         .param("toCurrencies", toCurrencies)
                         .param("amount", String.valueOf(amount)))
@@ -196,7 +198,7 @@ class ExchangeRateControllerTest {
         when(exchangeRateService.convertCurrencyToMultiple(fromCurrency, toCurrencies, amount)).thenThrow(new RuntimeException("Error"));
 
         // Act & Assert: Perform the request and verify the response
-        mockMvc.perform(get("/convert-multiple")
+        mockMvc.perform(get("/api/exchange-rate/convert-multiple")
                         .param("from", fromCurrency)
                         .param("toCurrencies", toCurrencies)
                         .param("amount", String.valueOf(amount)))
