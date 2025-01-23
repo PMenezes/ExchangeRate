@@ -28,7 +28,7 @@ public class ExchangeRateService {
 
     @Cacheable(value = "exchangeRateCache", key = "#fromCurrency", unless = "#result == null || #result.getQuotes().isEmpty()")
     public ExchangeRateDto getExchangeRate(String fromCurrency, String toCurrency) {
-        // Build the URL
+        // Build the exchangerate.host URL
         String url = UriComponentsBuilder.fromHttpUrl(apiUrl + "/live")
                 .queryParam("access_key", accessKey)
                 .queryParam("source", fromCurrency)
@@ -47,7 +47,7 @@ public class ExchangeRateService {
 
     @Cacheable(value = "exchangeRateCache", key = "#fromCurrency", unless = "#result == null || #result.getQuotes().isEmpty()")
     public ExchangeRateDto getAllExchangeRates(String fromCurrency) {
-        // Build the URL
+        // Build the exchangerate.host URL
         String url = UriComponentsBuilder.fromHttpUrl(apiUrl + "/live")
                 .queryParam("access_key", accessKey)
                 .queryParam("source", fromCurrency)
@@ -64,7 +64,7 @@ public class ExchangeRateService {
 
     @Cacheable(value = "exchangeRateCache", key = "#fromCurrency + '_' + #toCurrency + '_' + #amount")
     public Double convertCurrency(String fromCurrency, String toCurrency, double amount) {
-        // Build the URL
+        // Build the exchangerate.host URL
         String url = UriComponentsBuilder.fromHttpUrl(apiUrl + "/convert")
                 .queryParam("access_key", accessKey)
                 .queryParam("from", fromCurrency)

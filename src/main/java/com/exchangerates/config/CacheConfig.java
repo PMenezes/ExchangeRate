@@ -8,6 +8,9 @@ import org.springframework.context.annotation.Configuration;
 
 import java.util.concurrent.TimeUnit;
 
+/**
+ * Configuration class to create an instance of a cache manager
+ */
 @Configuration
 public class CacheConfig {
 

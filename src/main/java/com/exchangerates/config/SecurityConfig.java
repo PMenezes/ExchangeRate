@@ -19,7 +19,7 @@ public class SecurityConfig {
                         .requestMatchers("/api/**").authenticated()
                 )
                 .httpBasic(httpBasic -> httpBasic
-                        .realmName("ExchangeRatesApi") // Set a custom realm name
+                        .realmName("ExchangeRatesApi")
                 );; // Basic authentication for simplicity
         return http.build();
     }

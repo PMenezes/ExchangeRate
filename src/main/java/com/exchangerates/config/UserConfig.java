@@ -31,6 +31,6 @@ public class UserConfig {
 
     @Bean
     public PasswordEncoder passwordEncoder() {
-        return new BCryptPasswordEncoder(); // Use BCrypt for secure password hashing
+        return new BCryptPasswordEncoder(); // Used BCrypt for secure password hashing
     }
 }

@@ -23,6 +23,7 @@ public class ExchangeRateLimitingFilter implements Filter {
         HttpServletRequest httpRequest = (HttpServletRequest) request;
         HttpServletResponse httpResponse = (HttpServletResponse) response;
 
+        //Create a limit of requests allowed
         String clientId = getClientId(httpRequest);
         if (!rateLimiter.isAllowed(clientId)) {
             httpResponse.setStatus(HttpStatus.TOO_MANY_REQUESTS.value());
@@ -34,7 +35,6 @@ public class ExchangeRateLimitingFilter implements Filter {
     }
 
     private String getClientId(HttpServletRequest request) {
-        // Use a unique identifier for each client, e.g., an API key or IP address
         return request.getRemoteAddr();
     }
 }
