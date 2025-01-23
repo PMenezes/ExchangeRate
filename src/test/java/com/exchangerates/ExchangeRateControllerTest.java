@@ -1,17 +1,19 @@
 package com.exchangerates;
 
 import com.exchangerates.dto.ExchangeRateDto;
+import com.exchangerates.filter.ExchangeRateLimitingFilter;
 import com.exchangerates.service.ExchangeRateService;
 import com.exchangerates.controller.ExchangeRateController;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
-import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.cache.CacheManager;
+import org.springframework.context.annotation.ComponentScan;
+import org.springframework.context.annotation.FilterType;
+import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
 import java.util.Map;
 
@@ -24,9 +26,10 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  * Uses MockMvc to simulate HTTP requests to the REST API.
  * Mocks the service layer to isolate the controller's functionality.
  */
-@SpringBootTest(classes = ExchangeRatesApiApplication.class)
-@AutoConfigureMockMvc //need this in Spring Boot test
-class ExchangeRateControllerTest {
+@WebMvcTest(controllers = ExchangeRateController.class, excludeFilters = {
+        @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, classes = {ExchangeRateLimitingFilter.class})
+})
+public class ExchangeRateControllerTest {
 
     @Autowired
     private MockMvc mockMvc;
@@ -34,22 +37,22 @@ class ExchangeRateControllerTest {
     @MockBean
     private ExchangeRateService exchangeRateService;
 
+    @MockBean
+    private CacheManager cacheManager;
+
     @InjectMocks
     private ExchangeRateController exchangeRateController;
 
-    @BeforeEach
-    public void setUp() {
-        mockMvc = MockMvcBuilders.standaloneSetup(exchangeRateController).build();
-    }
 
     @Test
+    @WithMockUser(username = "user", roles = {"USER"})
     public void testGetExchangeRate_Success() throws Exception {
         // Arrange: Mock the service response
         String fromCurrency = "USD";
         String toCurrency = "EUR";
-        ExchangeRateDto mockRateDto = mock(ExchangeRateDto.class);
+        ExchangeRateDto mockRateDto = new ExchangeRateDto();
+        mockRateDto.setQuotes((Map.of("USDEUR", 1.23)));
         when(exchangeRateService.getExchangeRate(fromCurrency, toCurrency)).thenReturn(mockRateDto);
-        when(mockRateDto.getQuotes()).thenReturn(Map.of("USDEUR", 1.23));
 
         // Act & Assert: Perform the request and verify the response
         mockMvc.perform(get("/api/exchange-rate/rate")
@@ -63,6 +66,7 @@ class ExchangeRateControllerTest {
     }
 
     @Test
+    @WithMockUser(username = "user", roles = {"USER"})
     public void testGetExchangeRate_InternalServerError() throws Exception {
         // Arrange: Mock the service to throw an exception
         String fromCurrency = "USD";
@@ -81,14 +85,17 @@ class ExchangeRateControllerTest {
     }
 
     @Test
+    @WithMockUser(username = "user", roles = {"USER"})
     public void testGetAllExchangeRates_Success() throws Exception {
         // Arrange: Mock the service response
         String fromCurrency = "USD";
-        ExchangeRateDto mockRateDto = mock(ExchangeRateDto.class);
         Map<String, Double> mockQuotes = Map.of("USDEUR", 1.23, "USDGBP", 0.75);
+
+        ExchangeRateDto mockRateDto = new ExchangeRateDto();
+        mockRateDto.setSource("USD");
+        mockRateDto.setQuotes(mockQuotes);
+
         when(exchangeRateService.getAllExchangeRates(fromCurrency)).thenReturn(mockRateDto);
-        when(mockRateDto.getSource()).thenReturn("USD");
-        when(mockRateDto.getQuotes()).thenReturn(mockQuotes);
 
         // Act & Assert: Perform the request and verify the response
         mockMvc.perform(get("/api/exchange-rate/all")
@@ -103,6 +110,7 @@ class ExchangeRateControllerTest {
     }
 
     @Test
+    @WithMockUser(username = "user", roles = {"USER"})
     public void testGetAllExchangeRates_InternalServerError() throws Exception {
         // Arrange: Mock the service to throw an exception
         String fromCurrency = "USD";
@@ -119,6 +127,7 @@ class ExchangeRateControllerTest {
     }
 
     @Test
+    @WithMockUser(username = "user", roles = {"USER"})
     public void testConvertCurrency_Success() throws Exception {
         // Arrange: Mock the service response
         String fromCurrency = "USD";
@@ -141,6 +150,7 @@ class ExchangeRateControllerTest {
     }
 
     @Test
+    @WithMockUser(username = "user", roles = {"USER"})
     public void testConvertCurrency_InternalServerError() throws Exception {
         // Arrange: Mock the service to throw an exception
         String fromCurrency = "USD";
@@ -161,6 +171,7 @@ class ExchangeRateControllerTest {
     }
 
     @Test
+    @WithMockUser(username = "user", roles = {"USER"})
     public void testConvertCurrencyToMultiple_Success() throws Exception {
         // Arrange: Mock the service response
         String fromCurrency = "USD";
@@ -190,6 +201,7 @@ class ExchangeRateControllerTest {
     }
 
     @Test
+    @WithMockUser(username = "user", roles = {"USER"})
     public void testConvertCurrencyToMultiple_InternalServerError() throws Exception {
         // Arrange: Mock the service to throw an exception
         String fromCurrency = "USD";
