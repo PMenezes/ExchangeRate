@@ -70,11 +70,42 @@ The application will start at `http://localhost:8080` by default.
 - **Response**:
   ```json
   {
-    "base": "USD",
     "rates": {
-        "EUR": 0.85,
-        "GBP": 0.75,
-        "JPY": 110.53
+        "USDEUR": 0.85,
+        "USDGBP": 0.75,
+        "USDJPY": 110.53
+    }
+  }
+  ```
+  
+### Convert Currency
+**GET /api/exchange-rate/convert?from={currencyA}&to={currencyB}&amount={amount}**
+- **Description**: Converts one currency to another given an amount.
+- **Parameters**:
+    - `from`: Source currency code (e.g., `USD`)
+    - `to`: Target currency code (e.g., `EUR`)
+    - `amount`: Amount to convert (e.g., 100)
+- **Response**:
+  ```json
+  {
+    "rate": 85.0
+  }
+  ```
+  
+### Convert Multiple Currency
+**GET /api/exchange-rate/convert-multiple?from={currencyA}&toCurrencies={currencies}&amount={amount}**
+- **Description**: Converts one currency to another given an amount.
+- **Parameters**:
+    - `from`: Source currency code (e.g., `USD`)
+    - `toCurrencies`: Target currencies codes, comma separated (e.g., `EUR,JPY`)
+    - `amount`: Amount to convert (e.g., 100)
+- **Response**:
+  ```json
+  {
+    "rates": {
+        "USDEUR": 85,
+        "USDGBP": 75,
+        "USDJPY": 10.5
     }
   }
   ```
