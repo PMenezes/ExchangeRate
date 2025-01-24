@@ -5,11 +5,7 @@ This project is a Java Spring Boot application that fetches exchange rates from 
 ## Features
 
 - **Fetch Exchange Rates**: Retrieves exchange rates from ExchangeRate.host.
-- **Currency Conversion**: Converts amounts from one currency to another based on the fetched rates.
-- **Get All Rates**: Fetches all exchange rates for a given base currency.
-- **Caching**: Implements a caching mechanism to reduce external API calls, allowing up to a 1-minute delay for non-real-time data.
-- **Rate Limiting**: Protects the API from abuse by limiting the number of requests per user.
-- **Unit Testing**: Includes unit tests to ensure the reliability of API operations.
+- **Currency Conversion**: Converts amounts from one currency to others based on the fetched rates.
 
 ## Prerequisites
 
