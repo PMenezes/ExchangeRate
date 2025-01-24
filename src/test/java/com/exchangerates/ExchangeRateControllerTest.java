@@ -1,6 +1,5 @@
 package com.exchangerates;
 
-import com.exchangerates.dto.ExchangeRateDto;
 import com.exchangerates.filter.ExchangeRateLimitingFilter;
 import com.exchangerates.service.ExchangeRateService;
 import com.exchangerates.controller.ExchangeRateController;
@@ -50,9 +49,8 @@ public class ExchangeRateControllerTest {
         // Arrange: Mock the service response
         String fromCurrency = "USD";
         String toCurrency = "EUR";
-        ExchangeRateDto mockRateDto = new ExchangeRateDto();
-        mockRateDto.setQuotes((Map.of("USDEUR", 1.23)));
-        when(exchangeRateService.getExchangeRate(fromCurrency, toCurrency)).thenReturn(mockRateDto);
+
+        when(exchangeRateService.getExchangeRate(fromCurrency, toCurrency)).thenReturn(1.23);
 
         // Act & Assert: Perform the request and verify the response
         mockMvc.perform(get("/api/exchange-rate/rate")
@@ -91,19 +89,14 @@ public class ExchangeRateControllerTest {
         String fromCurrency = "USD";
         Map<String, Double> mockQuotes = Map.of("USDEUR", 1.23, "USDGBP", 0.75);
 
-        ExchangeRateDto mockRateDto = new ExchangeRateDto();
-        mockRateDto.setSource("USD");
-        mockRateDto.setQuotes(mockQuotes);
-
-        when(exchangeRateService.getAllExchangeRates(fromCurrency)).thenReturn(mockRateDto);
+        when(exchangeRateService.getAllExchangeRates(fromCurrency)).thenReturn(mockQuotes);
 
         // Act & Assert: Perform the request and verify the response
         mockMvc.perform(get("/api/exchange-rate/all")
                         .param("from", fromCurrency))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.base").value("USD"))
-                .andExpect(jsonPath("$.rates.USDEUR").value(1.23))
-                .andExpect(jsonPath("$.rates.USDGBP").value(0.75));
+                .andExpect(jsonPath("$.USDEUR").value(1.23))
+                .andExpect(jsonPath("$.USDGBP").value(0.75));
 
         // Verify that the service was called
         verify(exchangeRateService, times(1)).getAllExchangeRates(fromCurrency);
@@ -120,7 +113,7 @@ public class ExchangeRateControllerTest {
         mockMvc.perform(get("/api/exchange-rate/all")
                         .param("from", fromCurrency))
                 .andExpect(status().isInternalServerError())
-                .andExpect(jsonPath("$.error").value("Error"));
+                .andExpect(jsonPath("$.error").value(Double.NaN));
 
         // Verify that the service was called
         verify(exchangeRateService, times(1)).getAllExchangeRates(fromCurrency);

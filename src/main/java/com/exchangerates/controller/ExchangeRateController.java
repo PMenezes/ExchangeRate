@@ -1,6 +1,5 @@
 package com.exchangerates.controller;
 
-import com.exchangerates.dto.ExchangeRateDto;
 import com.exchangerates.service.ExchangeRateService;
 import io.swagger.v3.oas.annotations.Operation;
 import org.springframework.http.HttpStatus;
@@ -8,7 +7,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.Map;
 
 @RestController
@@ -25,8 +23,8 @@ public class ExchangeRateController {
     @Operation(summary = "Get exchange rate from a given currency")
     public ResponseEntity<Double> getExchangeRate(@RequestParam("from") String fromCurrency, @RequestParam("to") String toCurrency) {
         try {
-            ExchangeRateDto rates = exchangeRateService.getExchangeRate(fromCurrency, toCurrency);
-            return ResponseEntity.ok(rates.getQuotes().get(fromCurrency+toCurrency));
+            Double rate = exchangeRateService.getExchangeRate(fromCurrency, toCurrency);
+            return ResponseEntity.ok(rate);
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Double.NaN);
         }
@@ -34,17 +32,14 @@ public class ExchangeRateController {
 
     @GetMapping("/all")
     @Operation(summary = "Get all exchange rates for a given currency")
-    public ResponseEntity<Map<String, Object>> getAllExchangeRates(@RequestParam("from") String fromCurrency) {
+    public ResponseEntity<Map<String, Double>> getAllExchangeRates(@RequestParam("from") String fromCurrency) {
         try {
-            ExchangeRateDto rates = exchangeRateService.getAllExchangeRates(fromCurrency);
-            Map<String, Object> response = new HashMap<>();
-            response.put("base", rates.getSource());
-            response.put("rates", rates.getQuotes());
+            Map<String, Double> rates = exchangeRateService.getAllExchangeRates(fromCurrency);
 
-            return ResponseEntity.ok(response);
+            return ResponseEntity.ok(rates);
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(Collections.singletonMap("error", e.getMessage()));
+                    .body(Collections.singletonMap("error", Double.NaN));
         }
     }
 

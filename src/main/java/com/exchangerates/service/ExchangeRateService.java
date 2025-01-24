@@ -1,6 +1,8 @@
 package com.exchangerates.service;
 
+import com.exchangerates.config.ExternalApiProperties;
 import com.exchangerates.dto.ExchangeRateDto;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
@@ -9,54 +11,51 @@ import org.springframework.web.util.UriComponentsBuilder;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 
 
 @Service
 public class ExchangeRateService {
 
     private final RestTemplate restTemplate;
+    private final ExternalApiProperties properties;
 
-    @Value("${external.api.url}")
-    private String apiUrl;
-
-    @Value("${external.api.accessKey}")
-    private String accessKey;
-
-    public ExchangeRateService() {
-        this.restTemplate = new RestTemplate();
+    public ExchangeRateService(RestTemplate restTemplate, ExternalApiProperties properties) {
+        this.restTemplate = restTemplate;
+        this.properties = properties;
     }
 
-    @Cacheable(value = "exchangeRateCache", key = "#fromCurrency", unless = "#result == null || #result.getQuotes().isEmpty()")
-    public ExchangeRateDto getExchangeRate(String fromCurrency, String toCurrency) {
+    @Cacheable(value = "exchangeRateCache", key = "#fromCurrency", unless = "#result == null")
+    public Double getExchangeRate(String fromCurrency, String toCurrency) {
         // Build the exchangerate.host URL
-        String url = UriComponentsBuilder.fromHttpUrl(apiUrl + "/live")
-                .queryParam("access_key", accessKey)
+        String url = UriComponentsBuilder.fromHttpUrl(properties.getUrl() + "/live")
+                .queryParam("access_key", properties.getAccessKey())
                 .queryParam("source", fromCurrency)
                 .queryParam("currencies", toCurrency)
                 .toUriString();
 
         // Fetch the response
-        ExchangeRateDto response = restTemplate.getForObject(url, ExchangeRateDto.class);
+        ExchangeRateDto result = restTemplate.getForObject(url, ExchangeRateDto.class);
 
-        if (response != null && response.getQuotes() != null) {
-            return response;
+        if (result != null && result.getQuotes() != null) {
+            return result.getQuotes().get(fromCurrency+toCurrency);
         }
 
         throw new RuntimeException("Failed to fetch exchange rate for " + fromCurrency + " to " + toCurrency);
     }
 
-    @Cacheable(value = "exchangeRateCache", key = "#fromCurrency", unless = "#result == null || #result.getQuotes().isEmpty()")
-    public ExchangeRateDto getAllExchangeRates(String fromCurrency) {
+    @Cacheable(value = "exchangeRateCache", key = "#fromCurrency + '_ALL'", unless = "#result == null || #result.getQuotes().isEmpty()")
+    public Map<String, Double> getAllExchangeRates(String fromCurrency) {
         // Build the exchangerate.host URL
-        String url = UriComponentsBuilder.fromHttpUrl(apiUrl + "/live")
-                .queryParam("access_key", accessKey)
+        String url = UriComponentsBuilder.fromHttpUrl(properties.getUrl() + "/live")
+                .queryParam("access_key", properties.getAccessKey())
                 .queryParam("source", fromCurrency)
                 .toUriString();
 
-        ExchangeRateDto response = restTemplate.getForObject(url, ExchangeRateDto.class);
+        ExchangeRateDto result = restTemplate.getForObject(url, ExchangeRateDto.class);
 
-        if (response != null && response.getQuotes() != null) {
-            return response;
+        if (result != null && result.getQuotes() != null) {
+            return result.getQuotes();
         }
 
         throw new RuntimeException("Failed to fetch exchange rates");
@@ -65,8 +64,8 @@ public class ExchangeRateService {
     @Cacheable(value = "exchangeRateCache", key = "#fromCurrency + '_' + #toCurrency + '_' + #amount")
     public Double convertCurrency(String fromCurrency, String toCurrency, double amount) {
         // Build the exchangerate.host URL
-        String url = UriComponentsBuilder.fromHttpUrl(apiUrl + "/convert")
-                .queryParam("access_key", accessKey)
+        String url = UriComponentsBuilder.fromHttpUrl(properties.getUrl() + "/convert")
+                .queryParam("access_key", properties.getAccessKey())
                 .queryParam("from", fromCurrency)
                 .queryParam("to", toCurrency)
                 .queryParam("amount", amount)
@@ -83,14 +82,15 @@ public class ExchangeRateService {
         throw new RuntimeException("Failed to fetch conversion value");
     }
 
-    @Cacheable(value = "exchangeRateCache", key = "#fromCurrency + ':' + #toCurrencies + ':' + #amount")
+    @Cacheable(value = "exchangeRateCache", key = "#fromCurrency + ':' + #toCurrencies + ':' + #amount + '_ALL'")
     public Map<String, Double> convertCurrencyToMultiple(String fromCurrency, String toCurrencies, double amount) {
         String[] targetCurrencies = toCurrencies.split(",");
         Map<String, Double> conversions = new HashMap<>();
 
         for (String targetCurrency : targetCurrencies) {
             // Build the URL for the /convert endpoint
-            String url = UriComponentsBuilder.fromHttpUrl(apiUrl + "/convert")
+            String url = UriComponentsBuilder.fromHttpUrl(properties.getUrl() + "/convert")
+                    .queryParam("access_key", properties.getAccessKey())
                     .queryParam("from", fromCurrency)
                     .queryParam("to", targetCurrency.trim())
                     .queryParam("amount", amount)

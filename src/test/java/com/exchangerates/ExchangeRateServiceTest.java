@@ -1,26 +1,25 @@
 package com.exchangerates;
 
+import com.exchangerates.config.ExternalApiProperties;
 import com.exchangerates.dto.ExchangeRateDto;
 import com.exchangerates.service.ExchangeRateService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.core.env.Environment;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
-import org.springframework.test.context.ActiveProfiles;
-import org.springframework.test.context.TestPropertySource;
+import org.springframework.cache.Cache;
+import org.springframework.cache.CacheManager;
+import org.springframework.cache.annotation.EnableCaching;
+import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.web.client.RestTemplate;
 
 import java.util.HashMap;
 import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.mockito.Mockito.*;
 
 /**
@@ -28,21 +27,42 @@ import static org.mockito.Mockito.*;
  * Verifies the logic in the service method works correctly with mock data.
  */
 @SpringBootTest
-@ActiveProfiles("test")
+@EnableConfigurationProperties(ExternalApiProperties.class)
+@EnableCaching  // Enable caching in tests
 class ExchangeRateServiceTest {
 
-    @InjectMocks
     private ExchangeRateService exchangeRateService;
 
-    @Mock
+    @MockBean
     private RestTemplate restTemplate;
 
     @Autowired
-    private Environment environment;
+    private ExternalApiProperties properties;
+
+    @Autowired
+    private CacheManager cacheManager;
+
+    @BeforeEach
+    public void setUp() {
+        exchangeRateService = new ExchangeRateService(restTemplate, properties);
+    }
 
     @Test
-    public void testPropertyLoading() {
-        System.out.println("External API URL: " + environment.getProperty("external.api.url"));
+    public void testGetExchangeRate_Success() {
+        // Arrange
+        String url = "https://api.exchangerate.host/live?access_key=ce648ff03367120f4ee491ea636b8adb&source=USD&currencies=EUR";
+        ExchangeRateDto mockRates = new ExchangeRateDto("USD", Map.of("USDEUR", 1.23));
+
+        when(restTemplate.getForObject(eq(url), eq(ExchangeRateDto.class))).thenReturn(mockRates);
+
+        // Act
+        Double result = exchangeRateService.getExchangeRate("USD", "EUR");
+
+        // Assert
+        assertEquals(1.23, result);
+
+        // Verify the RestTemplate call
+        verify(restTemplate, times(1)).getForObject(eq(url), eq(ExchangeRateDto.class));
     }
 
     @Test
@@ -69,12 +89,19 @@ class ExchangeRateServiceTest {
     @Test
     void testConvertMultipleCurrency() {
         // Mock API response
-        Map<String, Double> mockResponse = new HashMap<>();
-        mockResponse.put("EUR", 85.0); // Example conversion value
-        mockResponse.put("CAD", 90.0); // Example conversion value
+        Map<String, Object> mockResponse1 = new HashMap<>();
+        mockResponse1.put("result", 85.0); // Example conversion value
 
-        // Mock RestTemplate behavior
-        when(restTemplate.getForObject(anyString(), (Class<Map>) any())).thenReturn(mockResponse);
+        Map<String, Object> mockResponse2 = new HashMap<>();
+        mockResponse2.put("result", 90.0); // Example conversion value
+
+        String url1 = "https://api.exchangerate.host/convert?access_key=ce648ff03367120f4ee491ea636b8adb&from=USD&to=EUR&amount=100.0";
+        String url2 = "https://api.exchangerate.host/convert?access_key=ce648ff03367120f4ee491ea636b8adb&from=USD&to=CAD&amount=100.0";
+
+
+        // Mock RestTemplate behavior in two different calls
+        when(restTemplate.getForObject(url1, Map.class)).thenReturn(mockResponse1);
+        when(restTemplate.getForObject(url2, Map.class)).thenReturn(mockResponse2);
 
         // Call the method under test
         String fromCurrency = "USD";
@@ -91,24 +118,29 @@ class ExchangeRateServiceTest {
     @Test
     public void testCacheableBehavior() {
         String baseCurrency = "USD";
-        String url = "https://api.exchangerate.host/live?access_key=ce648ff03367120f4ee491ea636b8adb&source=USD";
-
         Map<String, Double> mockRates = Map.of("USDEUR", 0.85, "USDGBP", 0.75);
-        Map<String, Object> mockResponse = Map.of("source", "USD", "quotes", mockRates);
 
         // Mock external API response
-        when(restTemplate.getForEntity(url, Map.class))
-                .thenReturn(new ResponseEntity<>(mockResponse, HttpStatus.OK));
+        ExchangeRateDto mockExchangeRates = new ExchangeRateDto("USD", mockRates);
+        when(restTemplate.getForObject(anyString(), eq(ExchangeRateDto.class))).thenReturn(mockExchangeRates);
 
         // First call - should fetch from API
-        ExchangeRateDto rates1 = exchangeRateService.getAllExchangeRates(baseCurrency);
-        assertEquals(0.85, rates1.getQuotes().get("USDEUR"));
+        Map<String, Double> rates1 = exchangeRateService.getAllExchangeRates(baseCurrency);
+        assertEquals(0.85, rates1.get("USDEUR"));
+
+        // Check if cache has been populated
+        Cache cache = cacheManager.getCache("exchangeRateCache");
+        assertNotNull(cache);
+        assertNotNull(cache.get(baseCurrency + "_ALL"));  // Check that cache contains the value for the key "USD"
 
         // Second call - should fetch from cache
-        ExchangeRateDto rates2 = exchangeRateService.getAllExchangeRates(baseCurrency);
-        assertEquals(0.85, rates2.getQuotes().get("USDEUR"));
+        Map<String, Double> rates2 = exchangeRateService.getAllExchangeRates(baseCurrency);
+        assertEquals(0.85, rates2.get("USDEUR"));
 
         // Verify external API was only called once
-        verify(restTemplate, times(1)).getForEntity(url, Map.class);
+        verify(restTemplate, times(1)).getForObject(anyString(), eq(ExchangeRateDto.class));
+
+        // Check if the cache is still holding the value
+        assertNotNull(cache.get(baseCurrency));  // Confirm cache has the key "USD"
     }
 }

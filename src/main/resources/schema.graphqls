@@ -1,5 +1,11 @@
 type Query {
     getExchangeRate(fromCurrency: String!, toCurrency: String!): Float
+    getAllExchangeRates(fromCurrency: String!): [ExchangeRate]!
+    convertCurrency(fromCurrency: String!, toCurrency: String!, amount: Float!): Float
+    convertCurrencyToMultiple(fromCurrency: String!, toCurrencies: String!, amount: Float!): [ExchangeRate]!
+}
 
-    convertCurrency(fromCurrency: String!, toCurrency: String!): Float
+type ExchangeRate {
+    currency: String!
+    rate: Float!
 }
