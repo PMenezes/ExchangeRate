@@ -110,13 +110,13 @@ The application will start at `http://localhost:8080` by default.
 
 The following GraphQL queries are available in the API:
 
-### 1. `exchangeRate`
+### 1. `getExchangeRate`
 Fetches the exchange rate from a given `fromCurrency` to a `toCurrency`.
 
 **Query Example:**
 ```graphql
 query {
-  exchangeRate(fromCurrency: "USD", toCurrency: "EUR")
+  getExchangeRate(fromCurrency: "USD", toCurrency: "EUR")
 }
 ```
 
@@ -124,7 +124,7 @@ query {
 ```json
 {
   "data": {
-    "exchangeRate": 0.85
+    "getExchangeRate": 0.85
   }
 }
 ```
