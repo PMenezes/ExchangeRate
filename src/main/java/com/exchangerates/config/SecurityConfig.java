@@ -16,11 +16,12 @@ public class SecurityConfig {
                 )
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/public/**").permitAll()
+                        .requestMatchers("/swagger-ui/**", "/v3/api-docs/**").permitAll() // Allow Swagger
                         .requestMatchers("/api/**").authenticated()
                 )
                 .httpBasic(httpBasic -> httpBasic
                         .realmName("ExchangeRatesApi")
-                );; // Basic authentication for simplicity
+                ); // Basic authentication for simplicity
         return http.build();
     }
 
