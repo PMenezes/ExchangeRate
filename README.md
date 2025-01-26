@@ -106,6 +106,153 @@ The application will start at `http://localhost:8080` by default.
   }
   ```
 
+## GraphQL Queries
+
+The following GraphQL queries are available in the API:
+
+### 1. `getExchangeRate`
+Fetches the exchange rate from a given `fromCurrency` to a `toCurrency`.
+
+**Query Example:**
+```graphql
+query {
+  getExchangeRate(fromCurrency: "USD", toCurrency: "EUR")
+}
+```
+
+**Response Example:**
+```json
+{
+  "data": {
+    "getExchangeRate": 0.85
+  }
+}
+```
+
+### 2. `convertCurrency`
+Converts a given `amount` of one currency (`fromCurrency`) to another (`toCurrency`).
+
+**Query Example:**
+```graphql
+query {
+  convertCurrency(fromCurrency: "USD", toCurrency: "EUR", amount: 100)
+}
+```
+
+**Response Example:**
+```json
+{
+  "data": {
+    "convertCurrency": 85.0
+  }
+}
+```
+
+### 3. `getAllExchangeRates`
+Fetches all exchange rates for a given `fromCurrency` in a list of supported currencies.
+
+**Query Example:**
+```graphql
+query {
+  getAllExchangeRates(fromCurrency: "USD") {
+    currency
+    rate
+  }
+}
+```
+
+**Response Example:**
+```json
+{
+  "data": {
+    "getAllExchangeRates": [
+      { "currency": "USDEUR", "rate": 0.85 },
+      { "currency": "USDGBP", "rate": 0.75 },
+      { "currency": "USDJPY", "rate": 110.0 }
+    ]
+  }
+}
+```
+
+### 4. `convertCurrencyToMultiple`
+Converts a given `amount` of one currency (`fromCurrency`) to multiple other currencies (`toCurrencies`).
+
+**Query Example:**
+```graphql
+query {
+  convertCurrencyToMultiple(fromCurrency: "USD", toCurrencies: "EUR,GBP,JPY", amount: 100) {
+    currency
+    rate
+  }
+}
+```
+
+**Response Example:**
+```json
+{
+  "data": {
+    "convertCurrencyToMultiple": [
+      { "currency": "EUR", "rate": 85.0 },
+      { "currency": "GBP", "rate": 75.0 },
+      { "currency": "JPY", "rate": 11000.0 }
+    ]
+  }
+}
+```
+
+## How to Run
+
+### 1. Install Dependencies
+Ensure you have all necessary dependencies installed for GraphQL:
+- `graphql-java`
+- `graphql-spring-boot-starter`
+- `graphql-java-tools`
+
+### 2. Run the Application
+To run the Spring Boot application with GraphQL functionality, execute:
+
+```bash
+mvn spring-boot:run
+```
+
+The API will be accessible at:
+
+- REST endpoints: `/api/exchange-rate/...`
+- GraphQL endpoint: `/graphql`
+
+### 3. Access GraphiQL UI (Optional)
+You can interact with the GraphQL API using the built-in GraphiQL UI provided by `graphql-spring-boot-starter`. It can be accessed at:
+
+```bash
+http://localhost:8080/graphiql
+```
+
+Here, you can test the various GraphQL queries mentioned above.
+
+## Caching
+
+All methods exposed through GraphQL (like `getExchangeRate`, `convertCurrency`, `convertCurrencyToMultiple`) are cached using Spring's `@Cacheable` annotation. The cache is keyed by the method parameters and will return the cached data if the same request is made within a short period.
+
+### Cache Keys:
+- `getExchangeRate`: Keyed by `fromCurrency + toCurrency`
+- `convertCurrency`: Keyed by `fromCurrency + toCurrency + amount`
+- `convertCurrencyToMultiple`: Keyed by `fromCurrency + toCurrencies + amount`
+
+## Error Handling
+
+In case of a failure to fetch exchange rates or conversions, the API will throw an appropriate error. For example, if a currency pair is invalid or the external API fails, a `RuntimeException` will be thrown.
+
+**Example:**
+```json
+{
+  "errors": [
+    {
+      "message": "Failed to fetch conversion for EUR"
+    }
+  ]
+}
+```
+
 ### Rate Limiting
 - The API limits the number of requests per minute for each user.
 - Customizable via `application.properties`.
