@@ -9,6 +9,9 @@ public class ExchangeRateDto {
     private String source;
     private Map<String, Double> quotes;
 
+    // Default constructor (required for Jackson)
+    public ExchangeRateDto() {}
+
     public ExchangeRateDto(String source, Map<String, Double> quotes) {
         this.source = source;
         this.quotes = quotes;
